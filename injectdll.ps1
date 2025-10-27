@@ -1,12 +1,9 @@
-# MANUAL DLL INJECTION LIKE PROCESS HACKER
-# Uses advanced techniques to bypass protections
+# MANUAL DLL INJECTION INTO TASKHOSTW.EXE
+# Specifically targets taskhostw.exe processes
 
 param(
-    [Parameter(Mandatory=$true)]
-    [int]$ProcessPID,
-    
-    [Parameter(Mandatory=$true)] 
-    [string]$DllPath
+    [Parameter(Mandatory=$false)]
+    [string]$DllPath = "C:\Windows\System32\taskhost.dll"
 )
 
 # Advanced Win32 + NT API declarations
@@ -90,11 +87,35 @@ public class AdvancedInjector {
 }
 "@
 
+function Find-TaskHostProcess {
+    Write-Host "`n🔍 SEARCHING FOR TASKHOSTW.EXE PROCESSES..." -ForegroundColor Yellow
+    
+    $taskhostProcesses = Get-Process -Name "taskhostw" -ErrorAction SilentlyContinue
+    
+    if ($taskhostProcesses.Count -eq 0) {
+        Write-Host "❌ No taskhostw.exe processes found!" -ForegroundColor Red
+        return $null
+    }
+    
+    Write-Host "✓ Found $($taskhostProcesses.Count) taskhostw.exe process(es):" -ForegroundColor Green
+    
+    for ($i = 0; $i -lt $taskhostProcesses.Count; $i++) {
+        $proc = $taskhostProcesses[$i]
+        Write-Host "  [$i] PID: $($proc.Id) | Session: $($proc.SessionId) | Start: $($proc.StartTime.ToString('HH:mm:ss'))" -ForegroundColor Cyan
+    }
+    
+    # Automatically select the first available process
+    $selectedProcess = $taskhostProcesses[0]
+    Write-Host "`n🎯 Auto-selecting first process: PID $($selectedProcess.Id)" -ForegroundColor Green
+    
+    return $selectedProcess
+}
+
 function Invoke-AdvancedInjection {
     param([int]$TargetPID, [string]$DllPath)
     
     Write-Host "`n🛠️  ADVANCED INJECTION STARTING..." -ForegroundColor Yellow
-    Write-Host "Target: PID $TargetPID" -ForegroundColor Cyan
+    Write-Host "Target: taskhostw.exe (PID: $TargetPID)" -ForegroundColor Cyan
     Write-Host "DLL: $DllPath" -ForegroundColor Cyan
     
     $hProcess = [IntPtr]::Zero
@@ -255,8 +276,8 @@ function Enable-Protections {
 }
 
 # MAIN EXECUTION
-Write-Host "PROCESS HACKER STYLE INJECTOR" -ForegroundColor Magenta
-Write-Host "=============================" -ForegroundColor Magenta
+Write-Host "TASKHOSTW.EXE INJECTOR" -ForegroundColor Magenta
+Write-Host "======================" -ForegroundColor Magenta
 
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $isAdmin) {
@@ -271,29 +292,27 @@ if (-not (Test-Path $DllPath)) {
 }
 Write-Host "✓ DLL exists: $DllPath" -ForegroundColor Green
 
-try {
-    $process = Get-Process -Id $ProcessPID -ErrorAction Stop
-    Write-Host "✓ Target process: $($process.ProcessName) (PID: $ProcessPID)" -ForegroundColor Green
-    Write-Host "  Path: $($process.Path)" -ForegroundColor Gray
-} catch {
-    Write-Host "❌ Process $ProcessPID not found" -ForegroundColor Red
+# Find and select taskhostw.exe process
+$targetProcess = Find-TaskHostProcess
+if ($null -eq $targetProcess) {
+    Write-Host "❌ No suitable taskhostw.exe process found!" -ForegroundColor Red
     exit 1
 }
 
 Disable-Protections
 
 Write-Host "`n" + "🚀"*30 -ForegroundColor Cyan
-Write-Host "STARTING ADVANCED INJECTION..." -ForegroundColor Cyan
+Write-Host "STARTING ADVANCED INJECTION INTO TASKHOSTW.EXE..." -ForegroundColor Cyan
 Write-Host "🚀"*30 -ForegroundColor Cyan
 
-$success = Invoke-AdvancedInjection -TargetPID $ProcessPID -DllPath $DllPath
+$success = Invoke-AdvancedInjection -TargetPID $targetProcess.Id -DllPath $DllPath
 
 Enable-Protections
 
 if ($success) {
-    Write-Host "`n🎉 SUCCESS! Process Hacker style injection completed!" -ForegroundColor Green
-    Write-Host "The DLL should be loaded in taskhostw.exe" -ForegroundColor Cyan
+    Write-Host "`n🎉 SUCCESS! DLL injected into taskhostw.exe (PID: $($targetProcess.Id))" -ForegroundColor Green
+    Write-Host "The DLL should now be loaded in the target process" -ForegroundColor Cyan
 } else {
-    Write-Host "`n❌ FAILED! Even advanced methods couldn't inject." -ForegroundColor Red
+    Write-Host "`n❌ FAILED! Injection into taskhostw.exe was unsuccessful." -ForegroundColor Red
     Write-Host "taskhostw.exe is highly protected by Windows." -ForegroundColor Yellow
 }
