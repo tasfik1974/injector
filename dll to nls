@@ -1,0 +1,46 @@
+# Administrator privilege check
+if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Write-Error "This script requires Administrator privileges. Please run PowerShell as Administrator."
+    exit 1
+}
+
+# System32 directory path
+$system32Path = "$env:windir\System32"
+
+# File paths
+$taskhostDll = Join-Path $system32Path "taskhost.dll"
+$taskhostExe = Join-Path $system32Path "taskhost.nls"
+
+# Check if taskhost.dll exists
+if (-NOT (Test-Path $taskhostDll)) {
+    Write-Error "taskhost.dll not found in System32 directory."
+    exit 1
+}
+
+# Check if taskhost.nls already exists
+if (Test-Path $taskhostExe) {
+    Write-Warning "taskhost.nls already exists. Do you want to overwrite it?"
+    $confirmation = Read-Host "Continue? (y/n)"
+    if ($confirmation -ne 'y') {
+        Write-Host "Operation cancelled."
+        exit 0
+    }
+}
+
+try {
+    # Take ownership and set permissions for taskhost.dll
+    Write-Host "Taking ownership of taskhost.dll..."
+    takeown /f $taskhostDll /A
+    icacls $taskhostDll /grant administrators:F
+    
+    # Rename the file back to original
+    Write-Host "Renaming taskhost.dll to taskhost.nls..."
+    Rename-Item -Path $taskhostDll -NewName "taskhost.nls" -Force
+    
+    Write-Host "Successfully renamed taskhost.dll to taskhost.nls" -ForegroundColor Green
+    Write-Host "System should return to normal state." -ForegroundColor Yellow
+}
+catch {
+    Write-Error "Error occurred: $_"
+    Write-Host "Failed to rename taskhost.dll" -ForegroundColor Red
+}
