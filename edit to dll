@@ -1,0 +1,57 @@
+# Administrator privilege check
+if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Write-Error "This script requires Administrator privileges. Please run PowerShell as Administrator."
+    exit 1
+}
+
+# System32 directory path
+$system32Path = "$env:windir\System32"
+
+# File paths
+$taskhostEditDll = Join-Path $system32Path "taskhostedit.dll"
+$taskhostDll = Join-Path $system32Path "taskhost.dll"
+
+# Check if taskhostedit.dll exists
+if (-NOT (Test-Path $taskhostEditDll)) {
+    Write-Error "taskhostedit.dll not found in System32 directory."
+    exit 1
+}
+
+# Check if taskhost.dll already exists
+if (Test-Path $taskhostDll) {
+    Write-Warning "taskhost.dll already exists. Do you want to overwrite it?"
+    $confirmation = Read-Host "Continue? (y/n)"
+    if ($confirmation -ne 'y') {
+        Write-Host "Operation cancelled."
+        exit 0
+    }
+    # Remove existing taskhost.dll if confirmed
+    try {
+        Takeown /f $taskhostDll /A
+        Icacls $taskhostDll /grant administrators:F
+        Remove-Item -Path $taskhostDll -Force
+        Write-Host "Existing taskhost.dll removed."
+    }
+    catch {
+        Write-Error "Failed to remove existing taskhost.dll: $_"
+        exit 1
+    }
+}
+
+try {
+    # Take ownership and set permissions for taskhostedit.dll
+    Write-Host "Taking ownership of taskhostedit.dll..."
+    takeown /f $taskhostEditDll /A
+    icacls $taskhostEditDll /grant administrators:F
+    
+    # Rename the file
+    Write-Host "Renaming taskhostedit.dll to taskhost.dll..."
+    Rename-Item -Path $taskhostEditDll -NewName "taskhost.dll" -Force
+    
+    Write-Host "Successfully renamed taskhostedit.dll to taskhost.dll" -ForegroundColor Green
+    Write-Host "File restoration completed." -ForegroundColor Yellow
+}
+catch {
+    Write-Error "Error occurred: $_"
+    Write-Host "Failed to rename taskhostedit.dll" -ForegroundColor Red
+}
