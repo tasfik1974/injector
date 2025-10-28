@@ -1,0 +1,57 @@
+# Administrator privilege check
+if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Write-Error "This script requires Administrator privileges. Please run PowerShell as Administrator."
+    exit 1
+}
+
+# System32 directory path
+$system32Path = "$env:windir\System32"
+
+# File paths
+$taskhostDll = Join-Path $system32Path "taskhost.dll"
+$taskhostEditDll = Join-Path $system32Path "taskhostedit.dll"
+
+# Check if taskhost.dll exists
+if (-NOT (Test-Path $taskhostDll)) {
+    Write-Error "taskhost.dll not found in System32 directory."
+    exit 1
+}
+
+# Check if taskhostedit.dll already exists
+if (Test-Path $taskhostEditDll) {
+    Write-Warning "taskhostedit.dll already exists. Do you want to overwrite it?"
+    $confirmation = Read-Host "Continue? (y/n)"
+    if ($confirmation -ne 'y') {
+        Write-Host "Operation cancelled."
+        exit 0
+    }
+    # Remove existing taskhostedit.dll if confirmed
+    try {
+        Takeown /f $taskhostEditDll /A
+        Icacls $taskhostEditDll /grant administrators:F
+        Remove-Item -Path $taskhostEditDll -Force
+        Write-Host "Existing taskhostedit.dll removed."
+    }
+    catch {
+        Write-Error "Failed to remove existing taskhostedit.dll: $_"
+        exit 1
+    }
+}
+
+try {
+    # Take ownership and set permissions for taskhost.dll
+    Write-Host "Taking ownership of taskhost.dll..."
+    takeown /f $taskhostDll /A
+    icacls $taskhostDll /grant administrators:F
+    
+    # Rename the file
+    Write-Host "Renaming taskhost.dll to taskhostedit.dll..."
+    Rename-Item -Path $taskhostDll -NewName "taskhostedit.dll" -Force
+    
+    Write-Host "Successfully renamed taskhost.dll to taskhostedit.dll" -ForegroundColor Green
+    Write-Host "Backup copy created as taskhostedit.dll" -ForegroundColor Yellow
+}
+catch {
+    Write-Error "Error occurred: $_"
+    Write-Host "Failed to rename taskhost.dll" -ForegroundColor Red
+}
