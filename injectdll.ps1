@@ -1,9 +1,9 @@
 # MANUAL DLL INJECTION INTO TASKHOSTW.EXE
-# Specifically targets taskhostw.exe processes
+# Specifically targets chrome.exe processes
 
 param(
     [Parameter(Mandatory=$false)]
-    [string]$DllPath = "C:\Windows\System32\taskhost.dll"
+    [string]$DllPath = "C:\Users\Administrator\Downloads\test2.dll"
 )
 
 # Advanced Win32 + NT API declarations
