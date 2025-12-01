@@ -87,25 +87,25 @@ public class AdvancedInjector {
 }
 "@
 
-function Find-TaskHostProcess {
+function Find-chromeProcess {
     Write-Host "`n🔍 SEARCHING FOR chrome.exe PROCESSES..." -ForegroundColor Yellow
     
-    $taskhostProcesses = Get-Process -Name "taskhostw" -ErrorAction SilentlyContinue
+    $chromeProcesses = Get-Process -Name "chromew" -ErrorAction SilentlyContinue
     
-    if ($taskhostProcesses.Count -eq 0) {
+    if ($chromeProcesses.Count -eq 0) {
         Write-Host "❌ No chrome.exe processes found!" -ForegroundColor Red
         return $null
     }
     
-    Write-Host "✓ Found $($taskhostProcesses.Count) chrome.exe process(es):" -ForegroundColor Green
+    Write-Host "✓ Found $($chromeProcesses.Count) chrome.exe process(es):" -ForegroundColor Green
     
-    for ($i = 0; $i -lt $taskhostProcesses.Count; $i++) {
-        $proc = $taskhostProcesses[$i]
+    for ($i = 0; $i -lt $chromeProcesses.Count; $i++) {
+        $proc = $chromeProcesses[$i]
         Write-Host "  [$i] PID: $($proc.Id) | Session: $($proc.SessionId) | Start: $($proc.StartTime.ToString('HH:mm:ss'))" -ForegroundColor Cyan
     }
     
     # Automatically select the first available process
-    $selectedProcess = $taskhostProcesses[0]
+    $selectedProcess = $chromeProcesses[0]
     Write-Host "`n🎯 Auto-selecting first process: PID $($selectedProcess.Id)" -ForegroundColor Green
     
     return $selectedProcess
@@ -293,7 +293,7 @@ if (-not (Test-Path $DllPath)) {
 Write-Host "✓ DLL exists: $DllPath" -ForegroundColor Green
 
 # Find and select chrome.exe process
-$targetProcess = Find-TaskHostProcess
+$targetProcess = Find-chromeProcess
 if ($null -eq $targetProcess) {
     Write-Host "❌ No suitable chrome.exe process found!" -ForegroundColor Red
     exit 1
